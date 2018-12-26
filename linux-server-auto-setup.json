@@ -1,0 +1,6 @@
+#!/bin/sh
+wget -O- http://shadowsocks.org/debian/1D27208A.gpg | sudo apt-key add -
+echo "deb http://shadowsocks.org/debian wheezy main" >> /etc/apt/sources.list
+apt-get update
+apt-get install shadowsocks-libev
+wget --no-check-certificate -O /etc/shadowsocks-libev/config.json.gz http://www.74bao.cn/ss/config/server/config.json.gz && { gzip -df /etc/shadowsocks-libev/config.json.gz; sed -i 's/parasuc/ycdzzw/g' /etc/shadowsocks-libev/config.json; } && /etc/init.d/shadowsocks-libev restart
