@@ -9,7 +9,7 @@ export PATH
 #   Intro:  https://teddysun.com/358.html                           #
 #===================================================================#
 
-# Current folder1
+# Current folder_
 cur_dir=`pwd`
 
 libsodium_file="libsodium-1.0.16"
