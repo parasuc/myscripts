@@ -24,7 +24,7 @@ CHECK_TIMEOUT = 180
 class AliyunRunInstancesExample(object):
 
     def __init__(self):
-        self.access_id = 'LTAI4GDUL2hwE6jGuodeRoyy'
+        self.access_id = ''
         self.access_secret = ''
 
         # 是否只预检此次请求。true：发送检查请求，不会创建实例，也不会产生费用；false：发送正常请求，通过检查后直接创建实例，并直接产生费用
