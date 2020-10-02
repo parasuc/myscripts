@@ -3,6 +3,7 @@
 '''
 使用镜像创建阿里虚拟机脚本
 24小时自动释放
+自动列出新创建的IP地址
 Usage:
     replace parameters in __init__ method
     access_id,access_secret,image_id,security_group_id,vswitch_id
