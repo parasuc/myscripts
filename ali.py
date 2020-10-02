@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 # coding=utf-8
 '''
-阿里云一键创建最实惠抢占式实例
-24小时后自动释放此实例
+使用镜像创建阿里虚拟机脚本
+24小时自动释放
+Usage:
+    replace parameters in __init__ method
+    access_id,access_secret,image_id,security_group_id,vswitch_id
 '''
-
 import json
 import time
 import traceback
 import datetime
+import sys
 
 from aliyunsdkcore.client import AcsClient
 from aliyunsdkcore.acs_exception.exceptions import ClientException, ServerException
@@ -17,9 +20,8 @@ from aliyunsdkecs.request.v20140526.DescribeInstancesRequest import DescribeInst
 
 
 RUNNING_STATUS = 'Running'
-CHECK_INTERVAL = 3
+CHECK_INTERVAL = 1
 CHECK_TIMEOUT = 180
-
 
 class AliyunRunInstancesExample(object):
 
@@ -36,7 +38,7 @@ class AliyunRunInstancesExample(object):
         # 实例的计费方式
         self.instance_charge_type = 'PostPaid'
         # 镜像ID
-        self.image_id = 'm-j6c17vxjqa4x5cxmqgcj'
+        self.image_id = 'm-j6c9vstrnuiq3omsj92o'
         # 指定新创建实例所属于的安全组ID
         self.security_group_id = 'sg-j6cggladpa2096g62cab'
         # 购买资源的时长
@@ -50,7 +52,7 @@ class AliyunRunInstancesExample(object):
         # 虚拟交换机ID
         self.vswitch_id = 'vsw-j6cqejqhrb9t63nh4yhl7'
         # 实例名称
-        self.instance_name = 'guanying'
+        self.instance_name = hostname
         # 是否使用镜像预设的密码
         self.password_inherit = True
         # 指定创建ECS实例的数量
@@ -58,7 +60,7 @@ class AliyunRunInstancesExample(object):
         # 公网出带宽最大值
         self.internet_max_bandwidth_out = 100
         # 云服务器的主机名
-        self.host_name = 'guanying'
+        self.host_name = hostname
         # 是否为实例名称和主机名添加有序后缀
         self.unique_suffix = True
         # 是否为I/O优化实例
@@ -73,7 +75,7 @@ class AliyunRunInstancesExample(object):
         self.system_disk_size = '20'
         # 系统盘的磁盘种类
         self.system_disk_category = 'cloud_efficiency'
-        
+
         self.client = AcsClient(self.access_id, self.access_secret, self.region_id)
 
     def run(self):
@@ -98,9 +100,9 @@ class AliyunRunInstancesExample(object):
         :return:instance_ids 需要检查的实例ID
         """
         request = RunInstancesRequest()
-       
+
         request.set_DryRun(self.dry_run)
-        
+
         request.set_InstanceType(self.instance_type)
         request.set_InstanceChargeType(self.instance_charge_type)
         request.set_ImageId(self.image_id)
@@ -122,11 +124,14 @@ class AliyunRunInstancesExample(object):
         request.set_AutoReleaseTime(self.auto_release_time)
         request.set_SystemDiskSize(self.system_disk_size)
         request.set_SystemDiskCategory(self.system_disk_category)
-         
+
         body = self.client.do_action_with_exception(request)
         data = json.loads(body)
+        #print data
         instance_ids = data['InstanceIdSets']['InstanceIdSet']
         print('Success. Instance creation succeed. InstanceIds: {}'.format(', '.join(instance_ids)))
+        self.instance_idss = list(instance_ids)
+        #print self.instance_idss
         return instance_ids
 
     def _check_instances_status(self, instance_ids):
@@ -156,7 +161,23 @@ class AliyunRunInstancesExample(object):
                 break
 
             time.sleep(CHECK_INTERVAL)
+        #print self.instance_idss
+        self.instances_ip(self.instance_idss)
 
+    def instances_ip(self, instance_ids):
+        request = DescribeInstancesRequest()
+        request.set_InstanceIds(json.dumps(instance_ids))
+        body = self.client.do_action_with_exception(request)
+        data = json.loads(body)
+        #print data
+        for i in range(self.amount):
+            print 'External IP:'+data['Instances']['Instance'][i]['PublicIpAddress']['IpAddress'][0]
 
 if __name__ == '__main__':
+    if len(sys.argv)<2:
+    	hostname = 'guanying'
+    else:
+    	hostname = sys.argv[1]
+    print hostname
+
     AliyunRunInstancesExample().run()
