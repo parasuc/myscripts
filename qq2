@@ -1,9 +1,10 @@
 #!/bin/bash
-res=`tccli cvm DescribeInstancesStatus --filter 'InstanceStatusSet[*].InstanceId'`
-res2=`echo $res | sed s/[[:space:]]//g`
-echo $res2
+res3=`tccli cvm DescribeInstances --filter 'InstanceSet[*].PublicIpAddresses'`
+echo $res3
 if [[ $1 == "d" ]]
 then
+  res=`tccli cvm DescribeInstancesStatus --filter 'InstanceStatusSet[*].InstanceId'`
+  res2=`echo $res | sed s/[[:space:]]//g`
   tes=`tccli cvm TerminateInstances --InstanceIds $res2`
   echo $tes
 fi
