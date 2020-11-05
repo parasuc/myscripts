@@ -1,0 +1,6 @@
+#!/bin/bash
+res=`tccli cvm DescribeInstancesStatus --filter 'InstanceStatusSet[*].InstanceId'`
+res2=`echo $res | sed s/[[:space:]]//g`
+echo $res2
+tes=`tccli cvm TerminateInstances --InstanceIds $res2`
+echo $tes
