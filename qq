@@ -1,1 +1,15 @@
-tccli cvm RunInstances --InstanceChargeType SPOTPAID --Placement '{"Zone":"ap-hongkong-2","ProjectId":0}' --InstanceType S2.SMALL1 --ImageId img-6geflkiw --SystemDisk '{"DiskType":"CLOUD_PREMIUM", "DiskSize":50}' --InternetAccessible '{"InternetChargeType":"TRAFFIC_POSTPAID_BY_HOUR","InternetMaxBandwidthOut":100,"PublicIpAssigned":true}' --InstanceCount 1 --InstanceName $1 --LoginSettings '{"KeepImageLogin":true}' --SecurityGroupIds '["sg-9d3kd95n"]' --HostName $1
+tccli cvm RunInstances --InstanceChargeType SPOTPAID --Placement '{"Zone":"ap-hongkong-2","ProjectId":0}' --InstanceType S2.SMALL1 --ImageId img-miz4mado --SystemDisk '{"DiskType":"CLOUD_PREMIUM", "DiskSize":50}' --InternetAccessible '{"InternetChargeType":"TRAFFIC_POSTPAID_BY_HOUR","InternetMaxBandwidthOut":100,"PublicIpAssigned":true}' --InstanceCount 1 --InstanceName $1 --LoginSettings '{"KeepImageLogin":true}' --SecurityGroupIds '["sg-9d3kd95n"]' --HostName $1
+sleep 8s
+
+res3=`tccli cvm DescribeInstances --filter 'InstanceSet[0].PublicIpAddresses'`
+echo $res3
+
+word1=${res3//[/}
+word2=${word1//]/}
+word3=${word2//\"/}
+word4=`eval echo $word3`
+echo ssh ubuntu@$word4
+echo 'connecting to server...'
+sleep 3s
+
+ssh ubuntu@$word4
