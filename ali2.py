@@ -5,6 +5,7 @@ import time
 import traceback
 import datetime
 import sys
+from dateutil.parser import parse
 
 from aliyunsdkcore.client import AcsClient
 from aliyunsdkcore.acs_exception.exceptions import ClientException, ServerException
@@ -15,7 +16,6 @@ from aliyunsdkecs.request.v20140526.DescribeInstancesRequest import DescribeInst
 RUNNING_STATUS = 'Running'
 CHECK_INTERVAL = 1
 CHECK_TIMEOUT = 180
-
 
 class AliyunRunInstancesExample(object):
 
@@ -28,15 +28,13 @@ class AliyunRunInstancesExample(object):
         # 实例所属的地域ID
         self.region_id = 'cn-hongkong'
         # 实例的资源规格
-        #self.instance_type = 'ecs.t5-lc2m1.nano'
-        self.instance_type = 'ecs.xn4.small'
-
+        self.instance_type = 'ecs.t5-lc2m1.nano'
         # 实例的计费方式
         self.instance_charge_type = 'PostPaid'
         # 镜像ID
-        self.image_id = 'm-j6c7fxxwuejgsovjfxir'
+        self.image_id = ''
         # 指定新创建实例所属于的安全组ID
-        self.security_group_id = 'sg-j6cggladpa2096g62cab'
+        self.security_group_id = ''
         # 购买资源的时长
         self.period = 1
         # 购买资源的时长单位
@@ -46,28 +44,31 @@ class AliyunRunInstancesExample(object):
         # 网络计费类型
         self.internet_charge_type = 'PayByTraffic'
         # 虚拟交换机ID
-        self.vswitch_id = 'vsw-j6c7o5h4u05vau2o6hh03'
-        #self.vswitch_id = 'vsw-j6cqejqhrb9t63nh4yhl7'
+        self.vswitch_id = 'vsw-j6cqejqhrb9t63nh4yhl7'
         # 实例名称
-        #self.instance_name = 'launch-advisor-20201018'
         self.instance_name = hostname
-        self.host_name = hostname
         # 是否使用镜像预设的密码
         self.password_inherit = True
         # 指定创建ECS实例的数量
         self.amount = 1
         # 公网出带宽最大值
         self.internet_max_bandwidth_out = 100
+        # 云服务器的主机名
+        self.host_name = hostname
+        # 是否为实例名称和主机名添加有序后缀
+        self.unique_suffix = True
         # 是否为I/O优化实例
         self.io_optimized = 'optimized'
+        # 后付费实例的抢占策略
+        self.spot_strategy = 'SpotWithPriceLimit'
+        # 设置实例的每小时最高价格
+        self.spot_price_limit = 0.05
         # 自动释放时间
-        self.auto_release_time = (datetime.datetime.now()+datetime.timedelta(hours=-7)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        self.auto_release_time = (datetime.datetime.now()+datetime.timedelta(hours=-5)).strftime("%Y-%m-%dT%H:%M:%SZ")
         # 系统盘大小
         self.system_disk_size = '20'
         # 系统盘的磁盘种类
         self.system_disk_category = 'cloud_efficiency'
-
-
 
         self.client = AcsClient(self.access_id, self.access_secret, self.region_id)
 
@@ -106,20 +107,25 @@ class AliyunRunInstancesExample(object):
         request.set_InternetChargeType(self.internet_charge_type)
         request.set_VSwitchId(self.vswitch_id)
         request.set_InstanceName(self.instance_name)
-        request.set_HostName(self.host_name)
         request.set_PasswordInherit(self.password_inherit)
         request.set_Amount(self.amount)
         request.set_InternetMaxBandwidthOut(self.internet_max_bandwidth_out)
+        request.set_HostName(self.host_name)
+        request.set_UniqueSuffix(self.unique_suffix)
         request.set_IoOptimized(self.io_optimized)
+        request.set_SpotStrategy(self.spot_strategy)
+        request.set_SpotPriceLimit(self.spot_price_limit)
         request.set_AutoReleaseTime(self.auto_release_time)
         request.set_SystemDiskSize(self.system_disk_size)
         request.set_SystemDiskCategory(self.system_disk_category)
 
         body = self.client.do_action_with_exception(request)
         data = json.loads(body)
+        #print data
         instance_ids = data['InstanceIdSets']['InstanceIdSet']
         print('Success. Instance creation succeed. InstanceIds: {}'.format(', '.join(instance_ids)))
         self.instance_idss = list(instance_ids)
+        #print self.instance_idss
         return instance_ids
 
     def _check_instances_status(self, instance_ids):
@@ -149,6 +155,7 @@ class AliyunRunInstancesExample(object):
                 break
 
             time.sleep(CHECK_INTERVAL)
+        #print self.instance_idss
         self.instances_ip(self.instance_idss)
 
     def instances_ip(self, instance_ids):
@@ -158,18 +165,22 @@ class AliyunRunInstancesExample(object):
         data = json.loads(body)
         #print data
         for i in range(self.amount):
-            print 'IP:'+data['Instances']['Instance'][i]['PublicIpAddress']['IpAddress'][0]
+            #print 'IP:'+data['Instances']['Instance'][i]['PublicIpAddress']['IpAddress'][0]
+            print 'ssh root@'+data['Instances']['Instance'][i]['PublicIpAddress']['IpAddress'][0]
+        time.sleep(1)
 
     def instances_list(self):
         request = DescribeInstancesRequest()
         #request.set_InstanceIds(json.dumps(instance_ids))
         body = self.client.do_action_with_exception(request)
         data = json.loads(body)
-        print '目前服务器列表:'
+        print '-------目前服务器列表:'
         for item in data['Instances']['Instance']:
-            print item['InstanceName']+' '+item['InstanceId']+' '+str(item['PublicIpAddress']['IpAddress'])
-            #print '\n'
-
+            #print item['AutoReleaseTime']
+            if item['AutoReleaseTime']!='':
+                print item['InstanceName']+'\t'+str(item['PublicIpAddress']['IpAddress'][0])+'\t'+(parse(item['AutoReleaseTime'])+datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M")
+            else:
+                print item['InstanceName']+'\t'+str(item['PublicIpAddress']['IpAddress'][0])+'\t'+u'不释放'
 
 if __name__ == '__main__':
     if len(sys.argv)<2:
@@ -178,4 +189,6 @@ if __name__ == '__main__':
     	hostname = sys.argv[1]
         print hostname
 
-    AliyunRunInstancesExample().run()
+    #AliyunRunInstancesExample().run()
+    AliyunRunInstancesExample().instances_list()
+    #AliyunRunInstancesExample().instances_ip([u'i-j6cijisu0fkpnrfu3vci'])
