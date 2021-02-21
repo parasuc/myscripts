@@ -6,6 +6,7 @@ import traceback
 import datetime
 import sys
 
+from dateutil.parser import parse
 from aliyunsdkcore.client import AcsClient
 from aliyunsdkcore.acs_exception.exceptions import ClientException, ServerException
 from aliyunsdkecs.request.v20140526.RunInstancesRequest import RunInstancesRequest
@@ -31,7 +32,7 @@ class AliyunRunInstancesExample(object):
         # 实例的计费方式
         self.instance_charge_type = 'PostPaid'
         # 镜像ID
-        self.image_id = 'm-j6c7fxxwuejgsovjfxir'
+        self.image_id = 'm-j6cd1j3gplqpeid8rvwv'
         # 指定新创建实例所属于的安全组ID
         self.security_group_id = 'sg-j6cggladpa2096g62cab'
         # 购买资源的时长
@@ -63,7 +64,7 @@ class AliyunRunInstancesExample(object):
         # 设置实例的每小时最高价格
         self.spot_price_limit = 0.05
         # 自动释放时间
-        self.auto_release_time = (datetime.datetime.now()+datetime.timedelta(hours=-6)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        self.auto_release_time = (datetime.datetime.now()+datetime.timedelta(hours=4)).strftime("%Y-%m-%dT%H:%M:%SZ")
         # 系统盘大小
         self.system_disk_size = '20'
         # 系统盘的磁盘种类
@@ -164,21 +165,31 @@ class AliyunRunInstancesExample(object):
         data = json.loads(body)
         #print data
         for i in range(self.amount):
-            print 'IP:'+data['Instances']['Instance'][i]['PublicIpAddress']['IpAddress'][0]
+            #print 'IP:'+data['Instances']['Instance'][i]['PublicIpAddress']['IpAddress'][0]
+            print 'ssh root@'+data['Instances']['Instance'][i]['PublicIpAddress']['IpAddress'][0]
+            newline='alias '+hostname+'="ssh root@'+data['Instances']['Instance'][i]['PublicIpAddress']['IpAddress'][0]+'"\n'
+            with open('alias','a') as file:
+                file.write(newline)
+        time.sleep(1)
 
     def instances_list(self):
         request = DescribeInstancesRequest()
         #request.set_InstanceIds(json.dumps(instance_ids))
         body = self.client.do_action_with_exception(request)
         data = json.loads(body)
-        print '目前服务器列表:'
+        print '-------目前服务器列表:'
         for item in data['Instances']['Instance']:
-            print item['InstanceName']+' '+item['InstanceId']+' '+str(item['PublicIpAddress']['IpAddress'])
-            #print '\n'
+            #print item['AutoReleaseTime']
+            if item['AutoReleaseTime']!='':
+                print item['InstanceName']+'\t'+str(item['PublicIpAddress']['IpAddress'][0])+'\t'+(parse(item['AutoReleaseTime'])+datetime.timedelta(hours=8)).strftime("%Y-%m-%d %H:%M")
+            else:
+                print item['InstanceName']+'\t'+str(item['PublicIpAddress']['IpAddress'][0])
 
 if __name__ == '__main__':
     if len(sys.argv)<2:
-    	hostname = 'guanying'
+    	#hostname = 'guanying'
+        print 'parameter hostname not set'
+        sys.exit()
     else:
     	hostname = sys.argv[1]
         print hostname
