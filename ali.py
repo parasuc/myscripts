@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # coding=utf-8
+‘’‘
+阿里云一键创建服务器脚步
+’‘’
 import json
 import time
 import traceback
